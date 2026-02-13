@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Linked GitHub installations (via GitHub App)
+model Installation {
+  id             String   @id @default(cuid())
+  installationId Int      @unique // GitHub App installation ID
+  accountLogin   String // GitHub org or user login
+  accountType    String // "Organization" | "User"
+  userId         String // Clerk user ID who installed
+  user           User     @relation(fields: [userId], references: [id])
+  createdAt      DateTime @default(now())
+  repos          Repo[]
+  reviews        Review[]
+}
+
+model User {
+  id        String   @id // This will be the Clerk userId
+  email     String   @unique
+  firstName String?
+  lastName  String?
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  installations Installation[]
+}
+
+// Repos the app has access to
+model Repo {
+  id             String       @id @default(cuid())
+  installationId String
+  installation   Installation @relation(fields: [installationId], references: [id])
+  repoId         Int          @unique // GitHub repo ID
+  fullName       String // e.g. "org/repo-name"
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  reviews        Review[]
+}
+
+// One review per PR (can have multiple runs if re-triggered)
+model Review {
+  id             String          @id @default(cuid())
+  installationId String
+  installation   Installation    @relation(fields: [installationId], references: [id])
+  repoId         String
+  repo           Repo            @relation(fields: [repoId], references: [id])
+  prNumber       Int
+  prTitle        String
+  prAuthor       String
+  headSha        String
+  status         ReviewStatus    @default(PENDING)
+  llmModel       String
+  tokensUsed     Int?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  comments       ReviewComment[]
+
+  @@unique([repoId, prNumber, headSha])
+}
+
+// Individual line comments posted to GitHub
+model ReviewComment {
+  id              String   @id @default(cuid())
+  reviewId        String
+  review          Review   @relation(fields: [reviewId], references: [id])
+  path            String // file path
+  line            Int // line number
+  body            String // comment text
+  severity        String // "info" | "warning" | "critical"
+  githubCommentId Int? // ID returned from GitHub API after posting
+  createdAt       DateTime @default(now())
+}
+
+enum ReviewStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
