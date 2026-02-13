@@ -8,7 +8,7 @@ export async function getRepos() {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  return await prisma.repo.findMany({
+  const repos = await prisma.repo.findMany({
     where: {
       installation: {
         userId: userId,
@@ -18,6 +18,10 @@ export async function getRepos() {
       fullName: "asc",
     },
   });
+
+  console.log(`🔍 getRepos: userId=${userId}, count=${repos.length}`);
+  console.log(`🔍 getRepos: repos=${JSON.stringify(repos)}`);
+  return repos;
 }
 
 export async function toggleRepoActive(repoId: string, isActive: boolean) {

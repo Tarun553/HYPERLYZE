@@ -106,7 +106,7 @@ export default async function DashboardOverview() {
         <div className="space-y-6">
           <h3 className="text-xl font-bold text-white">System Health</h3>
           <div className="glass rounded-3xl p-6 border-white/5 space-y-6">
-            <HealthItem label="Gemini Flash 1.5" score={99} />
+            <HealthItem label="Gemini Flash 2.5" score={99} />
             <HealthItem label="BullMQ Worker" score={100} />
             <HealthItem label="Prisma Node" score={98} />
             <HealthItem label="Redis Sync" score={100} />

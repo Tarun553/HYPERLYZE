@@ -16,7 +16,12 @@ export async function POST(req: NextRequest) {
   const hmac = crypto.createHmac("sha256", process.env.GITHUB_WEBHOOK_SECRET);
   const digest = "sha256=" + hmac.update(body).digest("hex");
 
-  if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest))) {
+  const signatureBuffer = Buffer.from(signature);
+  const digestBuffer = Buffer.from(digest);
+  if (
+    signatureBuffer.length !== digestBuffer.length ||
+    !crypto.timingSafeEqual(signatureBuffer, digestBuffer)
+  ) {
     return new Response("Invalid signature", { status: 401 });
   }
 
@@ -49,7 +54,11 @@ export async function POST(req: NextRequest) {
         for (const repo of repositories_added) {
           await prisma.repo.upsert({
             where: { repoId: repo.id },
-            update: { fullName: repo.full_name, isActive: true },
+            update: {
+              fullName: repo.full_name,
+              isActive: true,
+              installationId: dbInstallation.id,
+            },
             create: {
               repoId: repo.id,
               fullName: repo.full_name,
@@ -77,17 +86,26 @@ export async function POST(req: NextRequest) {
       (payload.action === "opened" || payload.action === "synchronize")
     ) {
       const { pull_request, repository, installation } = payload;
+      const dbInstallation = await prisma.installation.findUnique({
+        where: { installationId: installation.id },
+      });
+
+      if (!dbInstallation) {
+        return new Response("Installation not found", { status: 200 });
+      }
 
       // Find or create repo in our DB
       const dbRepo = await prisma.repo.upsert({
         where: { repoId: repository.id },
-        update: { fullName: repository.full_name, isActive: true },
+        update: {
+          fullName: repository.full_name,
+          isActive: true,
+          installationId: dbInstallation.id,
+        },
         create: {
           repoId: repository.id,
           fullName: repository.full_name,
-          installation: {
-            connect: { installationId: installation.id },
-          },
+          installationId: dbInstallation.id,
         },
       });
 
@@ -97,12 +115,7 @@ export async function POST(req: NextRequest) {
       // Create Review record
       const review = await prisma.review.create({
         data: {
-          installationId:
-            (
-              await prisma.installation.findUnique({
-                where: { installationId: installation.id },
-              })
-            )?.id || "",
+          installationId: dbInstallation.id,
           repoId: dbRepo.id,
           prNumber: pull_request.number,
           prTitle: pull_request.title,

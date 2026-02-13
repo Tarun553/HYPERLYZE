@@ -3,8 +3,20 @@ import { RepoCard } from "@/components/dashboard/repo-card";
 import { Github, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SyncFeedback } from "@/components/dashboard/sync-feedback";
+import { redirect } from "next/navigation";
 
-export default async function ReposPage() {
+export default async function ReposPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ installation_id?: string; setup_action?: string }>;
+}) {
+  const params = await searchParams;
+  if (params.installation_id) {
+    redirect(
+      `/api/github/callback?installation_id=${encodeURIComponent(params.installation_id)}`,
+    );
+  }
+
   const repos = await getRepos();
 
   return (

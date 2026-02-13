@@ -18,6 +18,7 @@ const worker = new Worker(
   "review-queue",
   async (job) => {
     const { reviewId, installationId, owner, repo, prNumber } = job.data;
+    console.log("job data", job.data);
 
     try {
       console.log(`Processing review ${reviewId} for PR #${prNumber}`);

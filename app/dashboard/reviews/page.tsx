@@ -3,11 +3,12 @@ import {
   History,
   Search,
   Filter,
-  ExternalLink,
   ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+
+type ReviewItem = Awaited<ReturnType<typeof getRecentReviews>>[number];
 
 export default async function ReviewsPage() {
   const reviews = await getRecentReviews();
@@ -63,7 +64,7 @@ export default async function ReviewsPage() {
   );
 }
 
-function ReviewRow({ review }: any) {
+function ReviewRow({ review }: { review: ReviewItem }) {
   return (
     <Link
       href={`/dashboard/reviews/${review.id}`}
@@ -135,7 +136,7 @@ function ZapIcon({ status }: { status: string }) {
   return <History className="w-6 h-6 text-cyber-red" />;
 }
 
-function Zap({ className }: any) {
+function Zap({ className }: { className?: string }) {
   return (
     <svg
       className={className}

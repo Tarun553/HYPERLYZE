@@ -1,10 +1,13 @@
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { syncUser } from "@/lib/syncUser";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  await syncUser();
+
   return (
     <div className="flex min-h-screen bg-background text-foreground cyber-grid">
       <Sidebar />

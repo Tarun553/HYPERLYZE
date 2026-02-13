@@ -60,7 +60,7 @@ async function testReview() {
       prAuthor: "tester",
       headSha: `mocksha_${Date.now()}`, // Unique SHA per run
       status: "PENDING",
-      llmModel: "gemini-1.5-flash",
+      llmModel: "gemini-2.5-flash",
     },
   });
 

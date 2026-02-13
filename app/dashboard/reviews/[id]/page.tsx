@@ -15,10 +15,11 @@ import { cn } from "@/lib/utils";
 export default async function ReviewDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const review = await prisma.review.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       repo: true,
       comments: true,
